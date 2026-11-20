@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#152a32">
+  <title>英语国家社会与文化 · 刷题</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./questions.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell masthead">
+      <a class="brand" href="./">
+        <span class="brand-symbol" aria-hidden="true"></span>
+        <span>英语国家社会与文化</span>
+      </a>
+      <span class="masthead-note" lang="en">Society &amp; Culture</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <h1 id="page-title">课程刷题</h1>
+        <p id="bank-summary"></p>
+      </div>
+      <div class="hero-stats" aria-label="累计练习记录">
+        <div><strong id="attempted">0</strong><span>已练题目</span></div>
+        <div><strong id="mastered">0</strong><span>最近答对</span></div>
+        <div><strong id="mistakes">0</strong><span>错题</span></div>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <section class="panel practice" id="practice" aria-label="答题区">
+        <div class="practice-top">
+          <div class="practice-title" id="session-title">顺序练习</div>
+          <div class="position" id="position"></div>
+          <progress id="progress" value="0" max="1" aria-label="本轮已答题数"></progress>
+        </div>
+        <div id="question-view">
+          <div class="question-meta" id="question-meta"></div>
+          <h2 id="prompt" tabindex="-1" lang="en"></h2>
+          <form id="answer-form">
+            <div id="answer-fields"></div>
+            <div id="feedback" role="status" aria-live="polite"></div>
+            <div class="actions">
+              <button type="button" class="button quiet" id="previous">上一题</button>
+              <div>
+                <button type="submit" class="button primary" id="check">检查答案</button>
+                <button type="button" class="button secondary" id="next">下一题</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="summary" id="summary-view" hidden></div>
+      </section>
+
+      <aside class="sidebar" aria-label="练习设置和题目导航">
+        <form class="panel settings" id="settings">
+          <h2>练习设置</h2>
+          <label for="exam">试卷</label>
+          <select id="exam"><option value="all">全部试卷</option></select>
+          <label for="type">题型</label>
+          <select id="type">
+            <option value="all">全部题型</option>
+            <option value="choice">单选题</option>
+            <option value="true-false">判断题</option>
+            <option value="fill">填空题</option>
+          </select>
+          <label for="mode">练习模式</label>
+          <select id="mode">
+            <option value="ordered">顺序练习</option>
+            <option value="shuffle">随机练习</option>
+            <option value="wrong">错题重练</option>
+          </select>
+          <button type="submit" class="button secondary">开始练习</button>
+        </form>
+
+        <details class="panel navigation" id="navigation" open>
+          <summary>题卡</summary>
+          <div class="question-grid" id="question-grid"></div>
+          <div class="legend" aria-hidden="true"><span class="dot good"></span>答对 <span class="dot bad"></span>答错</div>
+        </details>
+      </aside>
+    </div>
+    <p class="fine-print">题库来源于三份课程试卷。练习记录保存在当前浏览器。</p>
+    <noscript><p>请启用 JavaScript 以使用刷题功能。</p></noscript>
+  </main>
+</body>
+</html>
