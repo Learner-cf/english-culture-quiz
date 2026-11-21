@@ -3,11 +3,13 @@
 const bank = window.QUESTION_BANK;
 const questionsById = new Map(bank.questions.map(question => [question.id, question]));
 const examsById = new Map(bank.exams.map(exam => [exam.id, exam.title]));
-const typeNames = { 'true-false': '判断题', choice: '单选题', fill: '填空题' };
+const typeNames = { 'true-false': '判断题', choice: '单选题', 'multiple-choice': '多选题', fill: '填空题' };
 const modeNames = { ordered: '顺序练习', shuffle: '随机练习', wrong: '错题重练' };
 const storageKey = 'english-culture-quiz:v1';
 const $ = id => document.getElementById(id);
+const answerForm = $('answer-form');
 const answerFields = $('answer-fields');
+const nextButton = $('next');
 const feedback = $('feedback');
 const position = $('position');
 const questionGrid = $('question-grid');
@@ -96,7 +98,7 @@ function setFilters(filters) {
 function start(filters, focus = true) {
   const ids = bank.questions.filter(question =>
     (filters.exam === 'all' || filters.exam === String(question.exam))
-    && (filters.type === 'all' || filters.type === question.type)
+    && (filters.type === 'all' || filters.type === questionType(question))
     && (filters.mode !== 'wrong' || history[question.id] === false),
   ).map(question => question.id);
   if (filters.mode === 'shuffle') shuffle(ids);
@@ -106,25 +108,51 @@ function start(filters, focus = true) {
   render(focus);
 }
 
-function choices(question) {
-  return question.type === 'choice' ? Object.entries(question.options) : [['true', '正确'], ['false', '错误']];
+function questionType(question) {
+  return Array.isArray(question.answer) ? 'multiple-choice' : question.type;
 }
 
-function answerKey(question) {
-  return String(question.answer);
+function choices(question) {
+  if (question.type === 'true-false') return [['true', 'True', '正确'], ['false', 'False', '错误']];
+  return Object.entries(question.options).map(([key, label]) => [key, label, question.optionsZh?.[key]]);
+}
+
+function answerKeys(question) {
+  return Array.isArray(question.answer) ? question.answer : [String(question.answer)];
+}
+
+function questionText(text, lang, className) {
+  const line = element('span', undefined, className);
+  line.lang = lang;
+  for (const [index, part] of text.split(/\[空\s*(\d+)\]/g).entries()) {
+    if (index % 2) {
+      const marker = element('span', part, 'blank-marker');
+      marker.setAttribute('aria-label', '第 ' + part + ' 空');
+      marker.lang = 'zh-CN';
+      line.append(marker);
+    } else {
+      line.append(part);
+    }
+  }
+  return line;
 }
 
 function renderPrompt(question) {
-  prompt.replaceChildren();
-  for (const [index, part] of question.prompt.split(/\[空\s*(\d+)\]/g).entries()) {
-    if (index % 2) {
-      const marker = element('span', part, 'blank-marker');
-      marker.setAttribute('aria-label', `第 ${part} 空`);
-      prompt.append(marker);
-    } else {
-      prompt.append(part);
-    }
+  prompt.replaceChildren(questionText(question.prompt, 'en'));
+  if (question.promptZh) prompt.append(questionText(question.promptZh, 'zh-CN', 'prompt-translation'));
+}
+
+function optionText(label, translation) {
+  const text = element('span', undefined, 'option-text');
+  const english = element('span', label);
+  english.lang = 'en';
+  text.append(english);
+  if (translation) {
+    const chinese = element('span', translation, 'option-translation');
+    chinese.lang = 'zh-CN';
+    text.append(chinese);
   }
+  return text;
 }
 
 function renderFields(question, result) {
@@ -149,27 +177,30 @@ function renderFields(question, result) {
       group.append(label);
     }
     const hints = [];
+    if (!result) hints.push('填完所有空后，离开输入框或按回车即可判分。');
     if (question.unordered) hints.push('可乱序作答');
     if (question.blanks.some(blank => blank.caseSensitive)) hints.push('按原卷要求区分大小写');
     if (hints.length) group.append(element('p', hints.join(' · '), 'hint'));
   } else {
-    const trueFalse = question.type === 'true-false';
-    for (const [value, label] of choices(question)) {
+    const type = questionType(question);
+    const multi = type === 'multiple-choice';
+    const keys = answerKeys(question);
+    const selected = result ? (multi ? result.value : [result.value]) : [];
+    if (multi && !result) group.append(element('p', '选好后点击「下一题」查看答案。', 'hint'));
+    for (const [value, label, translation] of choices(question)) {
       const option = element('label', undefined, 'option');
       const input = element('input');
-      input.type = 'radio';
+      input.type = multi ? 'checkbox' : 'radio';
       input.name = 'answer';
       input.value = value;
       if (result) {
-        input.checked = result.value === value;
+        input.checked = selected.includes(value);
         input.disabled = true;
-        if (value === answerKey(question)) option.classList.add('correct');
+        if (keys.includes(value)) option.classList.add('correct');
         else if (input.checked) option.classList.add('incorrect');
       }
-      option.append(input, element('b', trueFalse ? (value === 'true' ? 'T' : 'F') : value));
-      const optionText = element('span', label);
-      if (!trueFalse) optionText.lang = 'en';
-      option.append(optionText);
+      const badge = type === 'true-false' ? (value === 'true' ? 'T' : 'F') : value;
+      option.append(input, element('b', badge), optionText(label, translation));
       group.append(option);
     }
   }
@@ -192,9 +223,17 @@ function renderFeedback(question, result) {
       feedback.append(line);
     }
   } else {
-    const [key, label] = choices(question).find(([value]) => value === answerKey(question));
-    const answer = question.type === 'choice' ? `${key}. ${label}` : label;
-    feedback.append(element('p', `标准答案 ${answer}`));
+    const keys = answerKeys(question);
+    for (const [key, label, translation] of choices(question)) {
+      if (!keys.includes(key)) continue;
+      const prefix = question.type === 'true-false' ? '标准答案 ' : '标准答案 ' + key + '. ';
+      const line = element('p', prefix);
+      const english = element('span', label);
+      english.lang = 'en';
+      line.append(english);
+      if (translation) line.append('（' + translation + '）');
+      feedback.append(line);
+    }
   }
 }
 
@@ -298,16 +337,12 @@ function render(focus = false) {
   }
   const result = session.results[question.id];
   $('question-meta').replaceChildren(
-    element('span', typeNames[question.type]),
+    element('span', typeNames[questionType(question)]),
     element('span', `${examsById.get(question.exam)} · 原卷第 ${question.number} 题 · ${question.points} 分`),
   );
   renderPrompt(question);
   renderFields(question, result);
   renderFeedback(question, result);
-  $('previous').disabled = session.index === 0;
-  $('next').textContent = session.index === session.ids.length - 1 ? '查看结果' : '下一题';
-  $('check').disabled = !!result;
-  $('check').textContent = result ? '已检查' : '检查答案';
   if (focus) prompt.focus();
 }
 
@@ -325,21 +360,11 @@ $('settings').addEventListener('submit', event => {
   start(filters);
 });
 
-$('answer-form').addEventListener('submit', event => {
-  event.preventDefault();
-  const question = questionsById.get(session.ids[session.index]);
-  if (!question || session.results[question.id]) return;
-  const fill = question.type === 'fill';
-  const inputs = [...answerFields.querySelectorAll('input')];
-  const value = fill ? inputs.map(input => input.value.trim()) : inputs.find(input => input.checked)?.value;
-  if (fill ? value.some(answer => !answer) : !value) {
-    feedback.textContent = fill ? '请填写每个空后检查答案。' : '请先选择一个答案。';
-    const missing = fill ? value.indexOf('') : 0;
-    inputs[missing].focus();
-    return;
-  }
+function currentQuestion() {
+  return questionsById.get(session.ids[session.index]);
+}
 
-  const matches = fill ? checkBlanks(question, value) : [value === answerKey(question)];
+function gradeAnswer(question, value, matches, focusNext = false) {
   const result = { value, matches, correct: matches.every(Boolean) };
   session.results[question.id] = result;
   history[question.id] = result.correct;
@@ -348,13 +373,52 @@ $('answer-form').addEventListener('submit', event => {
   renderFeedback(question, result);
   renderStats();
   renderNavigation();
-  $('check').disabled = true;
-  $('check').textContent = '已检查';
-  $('next').focus();
+  if (focusNext) nextButton.focus();
+}
+
+function gradeFill(question, focusNext = false) {
+  const values = Array.from(answerFields.querySelectorAll('.fill-input'), input => input.value.trim());
+  if (values.some(value => !value)) return false;
+  gradeAnswer(question, values, checkBlanks(question, values), focusNext);
+  return true;
+}
+
+answerFields.addEventListener('change', event => {
+  const question = currentQuestion();
+  if (!question || session.results[question.id] || event.target.type !== 'radio') return;
+  const value = event.target.value;
+  gradeAnswer(question, value, [answerKeys(question).includes(value)], true);
 });
 
-$('previous').addEventListener('click', () => goTo(session.index - 1));
-$('next').addEventListener('click', () => {
+answerFields.addEventListener('focusout', () => {
+  const question = currentQuestion();
+  if (question?.type !== 'fill' || session.results[question.id]) return;
+  gradeFill(question);
+});
+
+answerForm.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' || event.isComposing || !event.target.matches('.fill-input')) return;
+  event.preventDefault();
+  const question = currentQuestion();
+  if (question && !session.results[question.id]) gradeFill(question, true);
+});
+
+nextButton.addEventListener('pointerdown', event => {
+  // Keep a click on Next from blurring the final input before the click can grade it.
+  if (document.activeElement?.matches('.fill-input:not([readonly])')) event.preventDefault();
+});
+
+nextButton.addEventListener('click', () => {
+  const question = currentQuestion();
+  if (question && !session.results[question.id]) {
+    if (questionType(question) === 'multiple-choice') {
+      const selected = Array.from(answerFields.querySelectorAll('input:checked'), input => input.value);
+      const keys = answerKeys(question);
+      gradeAnswer(question, selected, [selected.length === keys.length && selected.every(key => keys.includes(key))]);
+      return;
+    }
+    if (question.type === 'fill' && gradeFill(question, true)) return;
+  }
   if (session.index < session.ids.length - 1) {
     goTo(session.index + 1);
   } else {
@@ -369,6 +433,8 @@ questionGrid.addEventListener('click', event => {
 });
 
 for (const exam of bank.exams) $('exam').add(new Option(exam.title, exam.id));
-$('bank-summary').textContent = `${bank.exams.length} 份试卷 · ${bank.questions.length} 道题 · 单选、判断与填空`;
+const bankTypes = new Set(bank.questions.map(questionType));
+if (bankTypes.has('multiple-choice')) $('type').add(new Option(typeNames['multiple-choice'], 'multiple-choice'), 2);
+$('bank-summary').textContent = [bank.exams.length + ' 份试卷', bank.questions.length + ' 道题', Array.from(bankTypes, type => typeNames[type]).join('、')].join(' · ');
 setFilters(session.filters);
 render();

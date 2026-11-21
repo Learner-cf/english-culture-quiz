@@ -74,12 +74,16 @@ progress::-webkit-progress-value { background: var(--accent); }
 #prompt { font-family: Georgia, "Times New Roman", "Microsoft YaHei UI", serif; font-size: clamp(1.35rem, 3vw, 1.91rem); line-height: 1.32; overflow-wrap: anywhere; margin: 0 0 24px; }
 .blank-marker { display: inline-block; color: var(--accent); border-bottom: 2px solid #96b6aa; min-width: 2.5em; text-align: center; font: 700 .8em Inter, "Segoe UI", sans-serif; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.prompt-translation { display: block; margin-top: .5rem; font: 600 clamp(1rem, 2.3vw, 1.25rem)/1.55 system-ui, sans-serif; color: var(--muted); }
 .options { display: grid; gap: 9px; }
 .option { position: relative; display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 9px 13px; line-height: 1.45; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfb; }
 .option:hover { border-color: #9ab9af; }
 .option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .option:focus-within { outline: 3px solid #157c72; outline-offset: 2px; }
 .option:has(input:checked) { border-color: #74a794; background: #edf6f1; }
+.option-text { min-width: 0; overflow-wrap: anywhere; }
+.option-translation { display: block; margin-top: .2rem; font-size: .94rem; }
+.option:has(input[type="checkbox"]:checked) b { color: #fff; background: var(--accent); }
 .option b { flex: 0 0 29px; text-align: center; line-height: 29px; border-radius: 7px; color: var(--accent); background: #e7eeea; }
 .option.correct, .fill-input.correct { border-color: #72ab8b; background: var(--accent-soft); }
 .option.incorrect, .fill-input.incorrect { border-color: #d59790; background: var(--bad-soft); }
@@ -93,8 +97,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 #feedback.good { color: var(--good); background: var(--accent-soft); }
 #feedback.bad { color: var(--bad); background: var(--bad-soft); }
 #feedback p { margin: 4px 0 0; }
-.actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; row-gap: 12px; margin-top: 25px; padding-top: 17px; border-top: 1px solid var(--line); }
-.actions > div, .summary-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; row-gap: 12px; margin-top: 25px; padding-top: 17px; border-top: 1px solid var(--line); }
+.summary-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .button { min-height: 42px; border-radius: 8px; padding: 7px 14px; border: 1px solid transparent; font-weight: 700; font-size: .9rem; }
 .primary { background: var(--accent); color: #fff; }
 .primary:not(:disabled):hover { background: #0e4a3f; }
