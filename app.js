@@ -6,8 +6,10 @@ const examsById = new Map(bank.exams.map(exam => [exam.id, exam.title]));
 const typeNames = { 'true-false': '判断题', choice: '单选题', 'multiple-choice': '多选题', fill: '填空题' };
 const modeNames = { ordered: '顺序练习', shuffle: '随机练习', wrong: '错题重练' };
 const storageKey = 'english-culture-quiz:v1';
+const translationStorageKey = `${storageKey}:show-translations`;
 const $ = id => document.getElementById(id);
 const questionView = $('question-view');
+const translationToggle = $('show-translations');
 const answerForm = $('answer-form');
 const answerFields = $('answer-fields');
 const nextButton = $('next');
@@ -54,6 +56,20 @@ function save() {
   } catch {
     // Practice remains usable if storage is disabled or full.
   }
+}
+
+function readTranslationPreference() {
+  try {
+    const saved = localStorage.getItem(translationStorageKey);
+    if (saved !== null) return saved === 'true';
+  } catch {
+    // Keep the control usable when storage is unavailable.
+  }
+  return !matchMedia('(hover: hover) and (pointer: fine)').matches;
+}
+
+function renderTranslationVisibility() {
+  questionView.classList.toggle('show-translations', translationToggle.checked);
 }
 
 function normalizeAnswer(text, caseSensitive) {
@@ -333,7 +349,6 @@ function render(focus = false) {
   const question = currentQuestion();
   const showSummary = !question || session.finished;
   questionView.hidden = showSummary;
-  questionView.classList.remove('show-translations');
   summaryView.hidden = !showSummary;
   if (showSummary) {
     renderSummary(focus);
@@ -436,12 +451,21 @@ nextButton.addEventListener('click', () => {
   advanceQuestion();
 });
 
+translationToggle.addEventListener('change', () => {
+  renderTranslationVisibility();
+  try {
+    localStorage.setItem(translationStorageKey, String(translationToggle.checked));
+  } catch {
+    // The choice still applies to the current page.
+  }
+});
+
 document.addEventListener('keydown', event => {
   const { key } = event;
   if (!['Home', 'PageUp', 'End', 'PageDown'].includes(key)) return;
   if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   const active = document.activeElement;
-  if (active?.matches('select')) return;
+  if (key !== 'PageDown' && active?.matches('select')) return;
   if ((key === 'Home' || key === 'End') && active?.matches('.fill-input:not([readonly])')) return;
 
   const question = currentQuestion();
@@ -460,7 +484,7 @@ document.addEventListener('keydown', event => {
       advanceQuestion();
       break;
     case 'PageDown':
-      questionView.classList.add('show-translations');
+      if (!translationToggle.checked) translationToggle.click();
       break;
   }
 });
@@ -473,5 +497,7 @@ for (const exam of bank.exams) $('exam').add(new Option(exam.title, exam.id));
 const bankTypes = new Set(bank.questions.map(questionType));
 if (bankTypes.has('multiple-choice')) $('type').add(new Option(typeNames['multiple-choice'], 'multiple-choice'), 2);
 $('bank-summary').textContent = [bank.exams.length + ' 份试卷', bank.questions.length + ' 道题', Array.from(bankTypes, type => typeNames[type]).join('、')].join(' · ');
+translationToggle.checked = readTranslationPreference();
+renderTranslationVisibility();
 setFilters(session.filters);
 render();
