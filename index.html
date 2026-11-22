@@ -7,7 +7,7 @@
   <title>英语国家社会与文化 · 刷题</title>
   <link rel="stylesheet" href="./styles.css?v=shortcuts">
   <script src="./questions.js?v=translations" defer></script>
-  <script src="./app.js?v=shortcuts" defer></script>
+  <script src="./app.js?v=number-shortcuts" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -43,7 +43,7 @@
         <div id="question-view">
           <div class="question-header">
             <div class="question-meta" id="question-meta"></div>
-            <label class="translation-control"><input type="checkbox" id="show-translations" aria-controls="prompt answer-fields feedback" aria-keyshortcuts="PageDown"> 中文翻译</label>
+            <label class="translation-control"><input type="checkbox" id="show-translations" aria-controls="prompt answer-fields feedback" aria-keyshortcuts="4"> 中文翻译</label>
           </div>
           <h2 id="prompt" tabindex="-1"></h2>
           <form id="answer-form">
@@ -59,10 +59,10 @@
 
       <aside class="sidebar" aria-label="练习设置和题目导航">
         <nav class="panel shortcuts" id="shortcuts" aria-label="快捷操作" hidden>
-          <button type="button" class="button secondary" data-shortcut="Home" aria-keyshortcuts="Home"><kbd>Home</kbd><span>上一题</span></button>
-          <button type="button" class="button secondary" data-shortcut="PageUp" aria-keyshortcuts="PageUp"><kbd>PgUp</kbd><span>查看答案</span></button>
-          <button type="button" class="button secondary" data-shortcut="End" aria-keyshortcuts="End"><kbd>End</kbd><span>下一题</span></button>
-          <button type="button" class="button secondary" data-shortcut="PageDown" aria-keyshortcuts="PageDown"><kbd>PgDn</kbd><span>中文翻译</span></button>
+          <button type="button" class="button secondary" data-shortcut="1" aria-keyshortcuts="1"><kbd>1</kbd><span>上一题</span></button>
+          <button type="button" class="button secondary" data-shortcut="2" aria-keyshortcuts="2"><kbd>2</kbd><span>查看答案</span></button>
+          <button type="button" class="button secondary" data-shortcut="3" aria-keyshortcuts="3"><kbd>3</kbd><span>下一题</span></button>
+          <button type="button" class="button secondary" data-shortcut="4" aria-keyshortcuts="4"><kbd>4</kbd><span>中文翻译</span></button>
         </nav>
         <form class="panel settings" id="settings">
           <h2>练习设置</h2>

@@ -19,10 +19,7 @@ const questionGrid = $('question-grid');
 const shortcutPanel = $('shortcuts');
 const summaryView = $('summary-view');
 const prompt = $('prompt');
-const shortcutKeys = new Set(['Home', 'PageUp', 'End', 'PageDown']);
-const keypadShortcuts = new Map([
-  ['Numpad7', 'Home'], ['Numpad9', 'PageUp'], ['Numpad1', 'End'], ['Numpad3', 'PageDown'],
-]);
+const shortcutKeys = new Set(['1', '2', '3', '4']);
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -468,42 +465,31 @@ translationToggle.addEventListener('change', () => {
 
 function runShortcut(key) {
   const question = currentQuestion();
-  if (!question || (session.finished && key !== 'Home')) return;
-
-  const active = document.activeElement;
-  if ((key === 'End' || (key === 'Home' && session.index > 0)) && active?.matches('.fill-input')) {
-    // Let the current question grade on blur before the active question changes.
-    active.blur();
-  }
+  if (!question || (session.finished && key !== '1')) return;
 
   switch (key) {
-    case 'Home':
+    case '1':
       goTo(session.finished ? session.index : session.index - 1);
       break;
-    case 'PageUp':
+    case '2':
       if (!session.results[question.id] && !feedback.hasChildNodes()) renderFeedback(question, undefined, true);
       feedback.scrollIntoView({ block: 'nearest' });
       break;
-    case 'End':
+    case '3':
       advanceQuestion();
       break;
-    case 'PageDown':
+    case '4':
       if (!translationToggle.checked) translationToggle.click();
       prompt.scrollIntoView({ block: 'nearest' });
       break;
   }
 }
 
-function shortcutKey(event) {
-  if (shortcutKeys.has(event.key)) return event.key;
-  if (shortcutKeys.has(event.code)) return event.code;
-  if (!document.activeElement?.matches('.fill-input:not([readonly])')) return keypadShortcuts.get(event.code);
-}
-
 window.addEventListener('keydown', event => {
+  const { key } = event;
+  if (!shortcutKeys.has(key) || !session.ids.length || (session.finished && key !== '1')) return;
   if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-  const key = shortcutKey(event);
-  if (!key || !session.ids.length || (session.finished && key !== 'Home')) return;
+  if (document.activeElement?.matches('.fill-input:not([readonly])')) return;
   event.preventDefault();
   if (!event.repeat) runShortcut(key);
 }, { capture: true });
