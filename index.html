@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#152a32">
   <title>英语国家社会与文化 · 刷题</title>
-  <link rel="stylesheet" href="./styles.css?v=translations">
+  <link rel="stylesheet" href="./styles.css?v=shortcuts">
   <script src="./questions.js?v=translations" defer></script>
-  <script src="./app.js?v=translations" defer></script>
+  <script src="./app.js?v=shortcuts" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -50,7 +50,6 @@
             <div id="answer-fields"></div>
             <div id="feedback" role="status" aria-live="polite"></div>
             <div class="actions">
-              <p class="hint keyboard-hint"><kbd>Home</kbd> 上一题 · <kbd>PgUp</kbd> 答案 · <kbd>End</kbd> 下一题 · <kbd>PgDn</kbd> 中文翻译</p>
               <button type="button" class="button primary" id="next">下一题</button>
             </div>
           </form>
@@ -59,6 +58,12 @@
       </section>
 
       <aside class="sidebar" aria-label="练习设置和题目导航">
+        <nav class="panel shortcuts" id="shortcuts" aria-label="快捷操作" hidden>
+          <button type="button" class="button secondary" data-shortcut="Home" aria-keyshortcuts="Home"><kbd>Home</kbd><span>上一题</span></button>
+          <button type="button" class="button secondary" data-shortcut="PageUp" aria-keyshortcuts="PageUp"><kbd>PgUp</kbd><span>查看答案</span></button>
+          <button type="button" class="button secondary" data-shortcut="End" aria-keyshortcuts="End"><kbd>End</kbd><span>下一题</span></button>
+          <button type="button" class="button secondary" data-shortcut="PageDown" aria-keyshortcuts="PageDown"><kbd>PgDn</kbd><span>中文翻译</span></button>
+        </nav>
         <form class="panel settings" id="settings">
           <h2>练习设置</h2>
           <label for="exam">试卷</label>
