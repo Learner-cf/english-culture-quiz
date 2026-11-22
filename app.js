@@ -6,10 +6,8 @@ const examsById = new Map(bank.exams.map(exam => [exam.id, exam.title]));
 const typeNames = { 'true-false': '判断题', choice: '单选题', 'multiple-choice': '多选题', fill: '填空题' };
 const modeNames = { ordered: '顺序练习', shuffle: '随机练习', wrong: '错题重练' };
 const storageKey = 'english-culture-quiz:v1';
-const translationStorageKey = `${storageKey}:show-translations`;
 const $ = id => document.getElementById(id);
 const questionView = $('question-view');
-const translationToggle = $('show-translations');
 const answerForm = $('answer-form');
 const answerFields = $('answer-fields');
 const nextButton = $('next');
@@ -58,20 +56,6 @@ function save() {
   } catch {
     // Practice remains usable if storage is disabled or full.
   }
-}
-
-function readTranslationPreference() {
-  try {
-    const saved = localStorage.getItem(translationStorageKey);
-    if (saved !== null) return saved === 'true';
-  } catch {
-    // Keep the control usable when storage is unavailable.
-  }
-  return !matchMedia('(hover: hover) and (pointer: fine)').matches;
-}
-
-function renderTranslationVisibility() {
-  questionView.classList.toggle('show-translations', translationToggle.checked);
 }
 
 function normalizeAnswer(text, caseSensitive) {
@@ -350,6 +334,7 @@ function render(focus = false) {
   renderNavigation();
   const question = currentQuestion();
   const showSummary = !question || session.finished;
+  questionView.classList.remove('show-translations');
   questionView.hidden = showSummary;
   shortcutPanel.hidden = showSummary;
   summaryView.hidden = !showSummary;
@@ -454,15 +439,6 @@ nextButton.addEventListener('click', () => {
   advanceQuestion();
 });
 
-translationToggle.addEventListener('change', () => {
-  renderTranslationVisibility();
-  try {
-    localStorage.setItem(translationStorageKey, String(translationToggle.checked));
-  } catch {
-    // The choice still applies to the current page.
-  }
-});
-
 function runShortcut(key) {
   const question = currentQuestion();
   if (!question || (session.finished && key !== '1')) return;
@@ -479,7 +455,7 @@ function runShortcut(key) {
       advanceQuestion();
       break;
     case '4':
-      if (!translationToggle.checked) translationToggle.click();
+      questionView.classList.add('show-translations');
       prompt.scrollIntoView({ block: 'nearest' });
       break;
   }
@@ -507,7 +483,5 @@ for (const exam of bank.exams) $('exam').add(new Option(exam.title, exam.id));
 const bankTypes = new Set(bank.questions.map(questionType));
 if (bankTypes.has('multiple-choice')) $('type').add(new Option(typeNames['multiple-choice'], 'multiple-choice'), 2);
 $('bank-summary').textContent = [bank.exams.length + ' 份试卷', bank.questions.length + ' 道题', Array.from(bankTypes, type => typeNames[type]).join('、')].join(' · ');
-translationToggle.checked = readTranslationPreference();
-renderTranslationVisibility();
 setFilters(session.filters);
 render();
