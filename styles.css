@@ -97,7 +97,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 #feedback.good { color: var(--good); background: var(--accent-soft); }
 #feedback.bad { color: var(--bad); background: var(--bad-soft); }
 #feedback p { margin: 4px 0 0; }
-.actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; row-gap: 12px; margin-top: 25px; padding-top: 17px; border-top: 1px solid var(--line); }
+.actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 25px; padding-top: 17px; border-top: 1px solid var(--line); }
+.keyboard-hint { display: none; }
 .summary-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .button { min-height: 42px; border-radius: 8px; padding: 7px 14px; border: 1px solid transparent; font-weight: 700; font-size: .9rem; }
 .primary { background: var(--accent); color: #fff; }
@@ -113,6 +114,10 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .summary-actions { margin-top: 20px; }
 .fine-print { color: var(--muted); margin: 21px 0 24px; font-size: .875rem; }
 
+@media (hover: hover) and (pointer: fine) {
+  #question-view:not(.show-translations) :is(.prompt-translation, .option-translation, .answer-translation) { display: none; }
+  .keyboard-hint { display: block; margin-inline-end: auto; }
+}
 @media (max-width: 860px) {
   .shell { width: calc(100% - 40px); }
   .workspace { grid-template-columns: 210px minmax(0, 1fr); gap: 16px; }

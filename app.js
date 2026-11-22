@@ -7,6 +7,7 @@ const typeNames = { 'true-false': '判断题', choice: '单选题', 'multiple-ch
 const modeNames = { ordered: '顺序练习', shuffle: '随机练习', wrong: '错题重练' };
 const storageKey = 'english-culture-quiz:v1';
 const $ = id => document.getElementById(id);
+const questionView = $('question-view');
 const answerForm = $('answer-form');
 const answerFields = $('answer-fields');
 const nextButton = $('next');
@@ -207,13 +208,15 @@ function renderFields(question, result) {
   answerFields.replaceChildren(group);
 }
 
-function renderFeedback(question, result) {
+function renderFeedback(question, result, revealAnswer = false) {
   feedback.className = '';
   feedback.replaceChildren();
-  if (!result) return;
-  feedback.className = result.correct ? 'good' : 'bad';
-  const earned = question.points * result.matches.filter(Boolean).length / result.matches.length;
-  feedback.append(element('strong', `${result.correct ? '回答正确' : '还可以再练习'} · ${formatNumber(earned)} / ${question.points} 分`));
+  if (!result && !revealAnswer) return;
+  if (result) {
+    feedback.className = result.correct ? 'good' : 'bad';
+    const earned = question.points * result.matches.filter(Boolean).length / result.matches.length;
+    feedback.append(element('strong', `${result.correct ? '回答正确' : '还可以再练习'} · ${formatNumber(earned)} / ${question.points} 分`));
+  }
   if (question.type === 'fill') {
     for (const [index, blank] of question.blanks.entries()) {
       const line = element('p', `第 ${index + 1} 空参考答案 `);
@@ -231,7 +234,7 @@ function renderFeedback(question, result) {
       const english = element('span', label);
       english.lang = 'en';
       line.append(english);
-      if (translation) line.append('（' + translation + '）');
+      if (translation) line.append(element('span', `（${translation}）`, 'answer-translation'));
       feedback.append(line);
     }
   }
@@ -327,9 +330,10 @@ function render(focus = false) {
   $('session-title').textContent = `${mode} · ${scope}`;
   renderStats();
   renderNavigation();
-  const question = questionsById.get(session.ids[session.index]);
+  const question = currentQuestion();
   const showSummary = !question || session.finished;
-  $('question-view').hidden = showSummary;
+  questionView.hidden = showSummary;
+  questionView.classList.remove('show-translations');
   summaryView.hidden = !showSummary;
   if (showSummary) {
     renderSummary(focus);
@@ -350,6 +354,16 @@ function goTo(index) {
   if (index < 0 || index >= session.ids.length) return;
   session.index = index;
   session.finished = false;
+  save();
+  render(true);
+}
+
+function advanceQuestion() {
+  if (session.index < session.ids.length - 1) {
+    goTo(session.index + 1);
+    return;
+  }
+  session.finished = true;
   save();
   render(true);
 }
@@ -419,12 +433,35 @@ nextButton.addEventListener('click', () => {
     }
     if (question.type === 'fill' && gradeFill(question, true)) return;
   }
-  if (session.index < session.ids.length - 1) {
-    goTo(session.index + 1);
-  } else {
-    session.finished = true;
-    save();
-    render(true);
+  advanceQuestion();
+});
+
+document.addEventListener('keydown', event => {
+  const { key } = event;
+  if (!['Home', 'PageUp', 'End', 'PageDown'].includes(key)) return;
+  if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const active = document.activeElement;
+  if (active?.matches('select')) return;
+  if ((key === 'Home' || key === 'End') && active?.matches('.fill-input:not([readonly])')) return;
+
+  const question = currentQuestion();
+  if (!question || (session.finished && key !== 'Home')) return;
+  event.preventDefault();
+  if (event.repeat) return;
+
+  switch (key) {
+    case 'Home':
+      goTo(session.finished ? session.index : session.index - 1);
+      break;
+    case 'PageUp':
+      if (!session.results[question.id] && !feedback.hasChildNodes()) renderFeedback(question, undefined, true);
+      break;
+    case 'End':
+      advanceQuestion();
+      break;
+    case 'PageDown':
+      questionView.classList.add('show-translations');
+      break;
   }
 });
 questionGrid.addEventListener('click', event => {
